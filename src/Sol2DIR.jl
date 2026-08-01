@@ -38,9 +38,13 @@ end
 """Compute a deterministic semi-impulsive absorptive 2D-IR spectrum."""
 function compute_2DIR_spectrum(traj::Trajectory, sp::SpectrumParams=SpectrumParams())
     sp.coherence_points >= 2 || throw(ArgumentError("coherence_points must be at least 2"))
-    sp.coherence_dt > 0 || throw(ArgumentError("coherence_dt must be positive"))
-    sp.relaxation >= 0 || throw(ArgumentError("relaxation must be nonnegative"))
+    isfinite(sp.coherence_dt) && sp.coherence_dt > 0 ||
+        throw(ArgumentError("coherence_dt must be finite and positive"))
+    isfinite(sp.relaxation) && sp.relaxation >= 0 ||
+        throw(ArgumentError("relaxation must be finite and nonnegative"))
     isempty(sp.t2_values) && throw(ArgumentError("t2_values must not be empty"))
+    all(isfinite, sp.t2_values) || throw(ArgumentError("t2_values must contain only finite values"))
+    all(>=(0), sp.t2_values) || throw(ArgumentError("t2_values must be nonnegative"))
     issorted(sp.t2_values) || throw(ArgumentError("t2_values must be sorted"))
     m=sp.coherence_points; dt=sp.coherence_dt
     corr=zeros(ComplexF64,m,m,length(sp.t2_values)); nframes=length(traj.time)
@@ -62,8 +66,8 @@ compute_2DIR(traj::Trajectory, t2_values) =
 """Return the dominant non-zero waiting-time beat frequency in THz."""
 function extract_beat_frequency(s::Spectra)
     length(s.t2)<3 && throw(ArgumentError("at least three waiting times are required"))
-    all(>(0), diff(s.t2)) || throw(ArgumentError("waiting times must be strictly increasing"))
+    dt = sampling_interval(s.t2; name="waiting times")
     trace=vec(sum(abs.(s.signal),dims=(1,2))); trace .-= mean(trace)
-    power=abs.(FFTW.rfft(trace)); freqs=FFTW.rfftfreq(length(trace),inv(mean(diff(s.t2))))
+    power=abs.(FFTW.rfft(trace)); freqs=FFTW.rfftfreq(length(trace),inv(dt))
     freqs[argmax(power[2:end])+1]
 end

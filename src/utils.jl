@@ -73,6 +73,18 @@ end
 @inline left(v::AbstractVector, n::Integer) = n == firstindex(v) ? v[n] : v[n-1]
 @inline right(v::AbstractVector, n::Integer) = n == lastindex(v) ? v[n] : v[n+1]
 
+"""Return the sampling interval for a finite, uniformly spaced coordinate axis."""
+function sampling_interval(axis::AbstractVector{<:Real}; name::AbstractString="axis")
+    length(axis) >= 2 || throw(ArgumentError("$name must contain at least two samples"))
+    all(isfinite, axis) || throw(ArgumentError("$name must contain only finite values"))
+    intervals = diff(axis)
+    all(>(0), intervals) || throw(ArgumentError("$name must be strictly increasing"))
+    interval = first(intervals)
+    all(d -> isapprox(d, interval; rtol=sqrt(eps(Float64)), atol=eps(Float64)), intervals) ||
+        throw(ArgumentError("$name must be uniformly sampled"))
+    interval
+end
+
 """Binary proximity map from a simple planar backbone embedding."""
 function contact_map(theta::AbstractVector{<:Real}; cutoff::Real=2.2)
     cutoff > 0 || throw(ArgumentError("cutoff must be positive"))

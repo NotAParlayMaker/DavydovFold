@@ -16,12 +16,15 @@ end
 
 """Score a predicted beat in a two-column, uniformly sampled CSV trace."""
 function analyze_beats(path::AbstractString; predicted_beat_freq::Real=1.2)
+    isfinite(predicted_beat_freq) && predicted_beat_freq >= 0 ||
+        throw(ArgumentError("predicted_beat_freq must be finite and nonnegative"))
     data=readdlm(path, ',', Float64)
     size(data, 2) >= 2 || throw(ArgumentError("trace must contain at least two columns"))
     t=data[:,1]; y=data[:,2].-mean(data[:,2])
     length(t) >= 4 || throw(ArgumentError("at least four samples are required"))
-    all(>(0), diff(t)) || throw(ArgumentError("sample times must be strictly increasing"))
-    f=FFTW.rfftfreq(length(y),inv(mean(diff(t)))); power=abs2.(FFTW.rfft(y))
+    dt = sampling_interval(t; name="sample times")
+    all(isfinite, y) || throw(ArgumentError("signal values must contain only finite values"))
+    f=FFTW.rfftfreq(length(y),inv(dt)); power=abs2.(FFTW.rfft(y))
     i=argmin(abs.(f.-predicted_beat_freq)); baseline=median(power[2:end])
     (frequency=f[i], likelihood_ratio=power[i]/max(baseline,eps()), power=power[i])
 end
