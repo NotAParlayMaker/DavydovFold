@@ -29,6 +29,21 @@ unknown unless calculated from user-supplied instrument measurements.
 See [the experimental feasibility guide](docs/experimental_feasibility.md) for
 worked examples, equations, controls, uncertainty, and staged decisions.
 
+## What DavydovFoldon Can and Cannot Establish
+
+DavydovFoldon can simulate a reduced hypothesis, produce candidate
+conformational trajectories, reconstruct an approximate idealized backbone,
+prepare that candidate for external atomistic testing, predict simplified
+spectral observables, and support quantitative comparison workflows as those
+independent validation layers are implemented.
+
+DavydovFoldon cannot, by itself, predict a validated native protein structure,
+replace an established atomistic MD package, operate arbitrary laboratory
+hardware safely, prove that quantum-directed protein folding occurs, or
+establish topological protection from a long-lived beat alone. In particular,
+candidate reconstruction and short MD are validation inputs—not scientific
+conclusions.
+
 ## Install
 
 ```bash
@@ -50,6 +65,8 @@ traj, final_theta, final_rho = run_soliton("MKFLILFN", p; tmax=20, dt=0.01, T=31
 save_trajectory("results.h5", traj)
 s = compute_2DIR_spectrum(traj, SpectrumParams())
 beat = extract_beat_frequency(s)
+candidate = reconstruct_structure(traj) # explicitly approximate torsion mapping
+write_pdb("candidate.pdb", candidate)
 fig = animate_soliton(traj) # requires: import Pkg; Pkg.add("CairoMakie")
 ```
 
@@ -60,6 +77,8 @@ HDF5 output contains `time`, `exciton_density`, `displacement`, `dihedral`, and
 
 ```bash
 julia --project=. bin/davydovfoldon predict MKFLILFN results.h5
+julia --project=. bin/davydovfoldon reconstruct MKFLILFN candidate.pdb
+julia --project=. bin/davydovfoldon prepare-openmm candidate.pdb system.json
 julia --project=. -e 'using DavydovFoldon; serve(port=8080)'
 curl -X POST localhost:8080/predict -d '{"sequence":"MKFLILFN"}'
 ```
