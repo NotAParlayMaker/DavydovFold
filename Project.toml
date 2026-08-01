@@ -1,0 +1,26 @@
+name = "DavydovFoldon"
+uuid = "9e9fb671-f83c-4a5e-bb89-8cff98b73d87"
+authors = ["DavydovFoldon contributors"]
+version = "1.0.0"
+
+[deps]
+DelimitedFiles = "8bb1440f-4735-579b-a4ab-409b98df4dab"
+FFTW = "7a1cc6ca-a1cc-5cc4-9b1f-9e1b0baaee2"
+HDF5 = "f67ccb44-e63f-5c2f-98bd-6dc0ccc4ba2f"
+HTTP = "cd3eb016-35fb-5094-929b-558a96fad6f3"
+JSON3 = "0f8b85d8-7281-11e9-16c2-39c1f2f11e4b"
+SQLite = "0aa819cd-b072-5ff4-a722-6bc24af294d9"
+
+[compat]
+FFTW = "1"
+HDF5 = "0.17"
+HTTP = "1"
+JSON3 = "1"
+SQLite = "1"
+julia = "1.10"
+
+[extras]
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+
+[targets]
+test = ["Test"]
