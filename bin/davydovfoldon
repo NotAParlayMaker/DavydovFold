@@ -1,6 +1,7 @@
 #!/usr/bin/env julia
+"""DavydovFoldon command-line entry point."""
 using DavydovFoldon
-length(ARGS) >= 2 && ARGS[1] == "predict" || error("usage: davydovfoldon predict SEQUENCE [output.h5]")
+length(ARGS) in (2, 3) && ARGS[1] == "predict" || error("usage: davydovfoldon predict SEQUENCE [output.h5]")
 output = length(ARGS) >= 3 ? ARGS[3] : "results.h5"
 traj, _, _ = run_soliton(ARGS[2])
 save_trajectory(output, traj)
