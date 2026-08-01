@@ -10,4 +10,6 @@
     @test short.time[end] == 0.05
     @test short.sequence == "MA"
     @test_throws ArgumentError run_soliton("MA"; T=-1)
+    @test_throws ArgumentError run_soliton("MA", DavydovParams(mass=0.0))
+    @test_throws ArgumentError run_soliton("MA"; dt=Inf)
 end

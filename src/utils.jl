@@ -20,6 +20,19 @@ Base.@kwdef struct DavydovParams
     output_stride::Int = 10
 end
 
+"""Validate physical and integration-related parameter invariants."""
+function validate(params::DavydovParams)
+    params.mass > 0 || throw(ArgumentError("mass must be positive"))
+    params.spring >= 0 || throw(ArgumentError("spring must be nonnegative"))
+    params.gamma >= 0 || throw(ArgumentError("gamma must be nonnegative"))
+    params.gamma_theta >= 0 || throw(ArgumentError("gamma_theta must be nonnegative"))
+    params.epsilon >= 0 || throw(ArgumentError("epsilon must be nonnegative"))
+    params.K >= 0 || throw(ArgumentError("K must be nonnegative"))
+    params.kB > 0 || throw(ArgumentError("kB must be positive"))
+    params.output_stride > 0 || throw(ArgumentError("output_stride must be positive"))
+    return params
+end
+
 const AA_CLASS = Dict(
     'G'=>(1.08,0.82,0.72), 'P'=>(0.72,1.18,1.35), 'A'=>(1.04,0.94,0.86),
     'V'=>(0.96,1.08,1.02), 'I'=>(0.94,1.10,1.02), 'L'=>(0.95,1.09,1.01),
@@ -38,6 +51,7 @@ function aa_to_params(aa::AbstractString)
     aa_to_params(only(aa))
 end
 
+"""Saved state of a soliton simulation, arranged as sites × time points."""
 struct Trajectory
     time::Vector{Float64}
     exciton_density::Matrix{Float64}
@@ -56,8 +70,8 @@ struct Trajectory
     end
 end
 
-@inline left(v, n) = n == 1 ? v[1] : v[n-1]
-@inline right(v, n) = n == length(v) ? v[end] : v[n+1]
+@inline left(v::AbstractVector, n::Integer) = n == firstindex(v) ? v[n] : v[n-1]
+@inline right(v::AbstractVector, n::Integer) = n == lastindex(v) ? v[n] : v[n+1]
 
 """Binary proximity map from a simple planar backbone embedding."""
 function contact_map(theta::AbstractVector{<:Real}; cutoff::Real=2.2)

@@ -4,11 +4,26 @@ Base.@kwdef struct SpectrumParams
     coherence_dt::Float64=0.025
     relaxation::Float64=0.5
 end
+"""A real absorptive 2D-IR signal sampled on `(omega1, omega3, t2)`."""
 struct Spectra
-    omega1::Vector{Float64}; omega3::Vector{Float64}; t2::Vector{Float64}
+    omega1::Vector{Float64}
+    omega3::Vector{Float64}
+    t2::Vector{Float64}
     signal::Array{Float64,3}
+    function Spectra(omega1::Vector{Float64}, omega3::Vector{Float64},
+                     t2::Vector{Float64}, signal::Array{Float64,3})
+        size(signal) == (length(omega1), length(omega3), length(t2)) ||
+            throw(DimensionMismatch("signal dimensions must match its coordinate axes"))
+        new(omega1, omega3, t2, signal)
+    end
 end
 
+Spectra(omega1::AbstractVector{<:Real}, omega3::AbstractVector{<:Real},
+        t2::AbstractVector{<:Real}, signal::AbstractArray{<:Real,3}) =
+    Spectra(collect(Float64, omega1), collect(Float64, omega3),
+            collect(Float64, t2), Array{Float64,3}(signal))
+
+"""Construct the instantaneous real symmetric one-exciton Hamiltonian."""
 function build_hamiltonian(traj::Trajectory, frame::Integer)
     checkbounds(traj.time, frame)
     N=length(traj.sequence); p=traj.params; H=zeros(Float64,N,N)
@@ -40,7 +55,9 @@ function compute_2DIR_spectrum(traj::Trajectory, sp::SpectrumParams=SpectrumPara
     omega=2pi .* FFTW.fftshift(FFTW.fftfreq(m, inv(dt)))
     Spectra(omega,omega,sp.t2_values,real.(raw))
 end
-compute_2DIR(traj::Trajectory,t2_values) = compute_2DIR_spectrum(traj,SpectrumParams(t2_values=Float64.(t2_values)))
+"""Convenience wrapper for computing a spectrum at selected waiting times."""
+compute_2DIR(traj::Trajectory, t2_values) =
+    compute_2DIR_spectrum(traj, SpectrumParams(t2_values=collect(Float64, t2_values)))
 
 """Return the dominant non-zero waiting-time beat frequency in THz."""
 function extract_beat_frequency(s::Spectra)

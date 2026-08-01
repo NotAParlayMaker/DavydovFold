@@ -6,8 +6,9 @@ The lattice uses velocity Verlet, the exciton a norm-preserving Cayley
 function run_soliton(seq::AbstractString, params::DavydovParams=DavydovParams();
                      tmax::Real=20.0, dt::Real=0.01, T::Real=310.0)
     isempty(seq) && throw(ArgumentError("sequence must not be empty"))
+    isfinite(dt) && isfinite(tmax) && isfinite(T) || throw(ArgumentError("dt, tmax, and T must be finite"))
     dt > 0 && tmax >= 0 && T >= 0 || throw(ArgumentError("dt must be positive; tmax and T must be nonnegative"))
-    params.output_stride > 0 || throw(ArgumentError("output_stride must be positive"))
+    validate(params)
     sequence=uppercase(String(seq)); N=length(sequence); rng=MersenneTwister(params.seed)
     factors=aa_to_params.(collect(sequence)); J=params.J .* first.(factors)
     chi=params.chi .* getindex.(factors,2); xi=params.xi .* last.(factors)
@@ -49,7 +50,7 @@ function run_soliton(seq::AbstractString, params::DavydovParams=DavydovParams();
         end
     end
     traj=Trajectory(times,rho,us,th,sequence,params)
-    (traj, copy(theta), abs2.(B))
+    return (traj, copy(theta), abs2.(B))
 end
 
 """Create an interactive exciton kymograph (Makie is loaded on demand)."""
