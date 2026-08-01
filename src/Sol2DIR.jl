@@ -10,6 +10,7 @@ struct Spectra
 end
 
 function build_hamiltonian(traj::Trajectory, frame::Integer)
+    checkbounds(traj.time, frame)
     N=length(traj.sequence); p=traj.params; H=zeros(Float64,N,N)
     f=aa_to_params.(collect(traj.sequence))
     for n in 1:N
@@ -21,6 +22,11 @@ end
 
 """Compute a deterministic semi-impulsive absorptive 2D-IR spectrum."""
 function compute_2DIR_spectrum(traj::Trajectory, sp::SpectrumParams=SpectrumParams())
+    sp.coherence_points >= 2 || throw(ArgumentError("coherence_points must be at least 2"))
+    sp.coherence_dt > 0 || throw(ArgumentError("coherence_dt must be positive"))
+    sp.relaxation >= 0 || throw(ArgumentError("relaxation must be nonnegative"))
+    isempty(sp.t2_values) && throw(ArgumentError("t2_values must not be empty"))
+    issorted(sp.t2_values) || throw(ArgumentError("t2_values must be sorted"))
     m=sp.coherence_points; dt=sp.coherence_dt
     corr=zeros(ComplexF64,m,m,length(sp.t2_values)); nframes=length(traj.time)
     for (q,t2) in pairs(sp.t2_values)
@@ -30,14 +36,16 @@ function compute_2DIR_spectrum(traj::Trajectory, sp::SpectrumParams=SpectrumPara
             corr[i,j,q]=sum(exp.(-im.*vals.*((i-j)*dt))) / length(vals) * exp(-sp.relaxation*(i+j-2)*dt)
         end
     end
-    raw=FFTW.fftshift(FFTW.fft(corr,(1,2)),(1,2)); omega=2pi .* collect(-m÷2:m÷2-1)./(m*dt)
+    raw=FFTW.fftshift(FFTW.fft(corr,(1,2)),(1,2))
+    omega=2pi .* FFTW.fftshift(FFTW.fftfreq(m, inv(dt)))
     Spectra(omega,omega,sp.t2_values,real.(raw))
 end
-compute_2DIR(traj::Trajectory,t2_values) = compute_2DIR_spectrum(traj,SpectrumParams(t2_values=collect(Float64,t2_values)))
+compute_2DIR(traj::Trajectory,t2_values) = compute_2DIR_spectrum(traj,SpectrumParams(t2_values=Float64.(t2_values)))
 
 """Return the dominant non-zero waiting-time beat frequency in THz."""
 function extract_beat_frequency(s::Spectra)
     length(s.t2)<3 && throw(ArgumentError("at least three waiting times are required"))
+    all(>(0), diff(s.t2)) || throw(ArgumentError("waiting times must be strictly increasing"))
     trace=vec(sum(abs.(s.signal),dims=(1,2))); trace .-= mean(trace)
     power=abs.(FFTW.rfft(trace)); freqs=FFTW.rfftfreq(length(trace),inv(mean(diff(s.t2))))
     freqs[argmax(power[2:end])+1]

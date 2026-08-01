@@ -5,17 +5,22 @@ version = "1.0.0"
 
 [deps]
 DelimitedFiles = "8bb1440f-4735-579b-a4ab-409b98df4dab"
+DifferentialEquations = "0c46a032-eb83-5123-abaf-570d42b7fbaa"
 FFTW = "7a1cc6ca-a1cc-5cc4-9b1f-9e1b0baaee2"
 HDF5 = "f67ccb44-e63f-5c2f-98bd-6dc0ccc4ba2f"
 HTTP = "cd3eb016-35fb-5094-929b-558a96fad6f3"
 JSON3 = "0f8b85d8-7281-11e9-16c2-39c1f2f11e4b"
+Parameters = "d96e819e-fc66-5662-9728-84c9c7592b0a"
+Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
 SQLite = "0aa819cd-b072-5ff4-a722-6bc24af294d9"
 
 [compat]
+DifferentialEquations = "7"
 FFTW = "1"
 HDF5 = "0.17"
 HTTP = "1"
 JSON3 = "1"
+Parameters = "0.12"
 SQLite = "1"
 julia = "1.10"
 
