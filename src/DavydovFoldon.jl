@@ -1,3 +1,4 @@
+"""DavydovFoldon: stochastic Davydov–Scott simulations and predicted 2D-IR analysis."""
 module DavydovFoldon
 
 using LinearAlgebra, Random, Statistics, DelimitedFiles

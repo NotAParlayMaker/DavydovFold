@@ -1,4 +1,10 @@
-"""Physical and numerical parameters in scaled ps/Å/amu units."""
+"""Physical and numerical parameters in scaled ps/Å/amu units.
+
+All fields are concrete so a parameter object can be passed through the hot
+integration loop without dynamic dispatch. `output_stride` controls the number
+of integration steps between stored frames and `seed` makes thermal runs
+reproducible.
+"""
 Base.@kwdef struct DavydovParams
     E0::Float64 = 0.0
     J::Float64 = 1.0
@@ -26,7 +32,9 @@ const AA_CLASS = Dict(
     'R'=>(0.95,1.04,1.24), 'H'=>(0.96,1.06,1.20))
 
 """Return `(J, χ, ξ)` multipliers for a one-letter amino-acid code."""
-aa_to_params(aa::Char) = get(AA_CLASS, uppercase(aa), (1.0, 1.0, 1.0))
+aa_to_params(aa::Char)::NTuple{3,Float64} = get(AA_CLASS, uppercase(aa), (1.0, 1.0, 1.0))
+
+"""A saved simulation trajectory (sites × time points for each field)."""
 
 struct Trajectory
     time::Vector{Float64}
@@ -41,7 +49,8 @@ end
 @inline right(v, n) = n == length(v) ? v[end] : v[n+1]
 
 """Binary proximity map from a simple planar backbone embedding."""
-function contact_map(theta::AbstractVector; cutoff=2.2)
+function contact_map(theta::AbstractVector{<:Real}; cutoff::Real=2.2)
+    cutoff > 0 || throw(ArgumentError("cutoff must be positive"))
     N = length(theta); xy = zeros(Float64, 2, N)
     angle = 0.0
     for n in 2:N
@@ -55,6 +64,7 @@ function contact_map(theta::AbstractVector; cutoff=2.2)
     C
 end
 
+"""Write `traj` and its final contact map to an HDF5 file at `path`."""
 function save_trajectory(path::AbstractString, traj::Trajectory)
     import HDF5
     HDF5.h5open(path, "w") do f
