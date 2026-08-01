@@ -1,0 +1,17 @@
+{
+  "input_structure_path": "candidate.pdb",
+  "forcefield": "amber14-all.xml",
+  "water_model": "amber14/tip3p.xml",
+  "temperature_K": 310.0,
+  "pressure_bar": 1.0,
+  "ionic_strength_molar": 0.15,
+  "solvent_padding_nm": 1.0,
+  "integration_timestep_fs": 2.0,
+  "minimization_max_iterations": 1000,
+  "equilibration_duration_ps": 10.0,
+  "production_duration_ps": 20.0,
+  "trajectory_output_path": "trajectory.dcd",
+  "final_coordinates_path": "final.pdb",
+  "run_summary_path": "run_summary.json",
+  "random_seed": 42
+}
