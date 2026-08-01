@@ -9,14 +9,16 @@ end
 
 """Design uniformly spaced waiting times and a four-step phase cycle."""
 function design_pulse_sequence(desired_t2_range; step::Real=0.05)
-    step > 0 || throw(ArgumentError("step must be positive"))
+    isfinite(step) && step > 0 || throw(ArgumentError("step must be finite and positive"))
     lo,hi=extrema(desired_t2_range); waits=collect(lo:step:hi)
     (waiting_times=waits, phase_cycle=[0,pi/2,pi,3pi/2], coherence_delays=(-0.5,0.5))
 end
 
 """Score a predicted beat in a two-column, uniformly sampled CSV trace."""
 function analyze_beats(path::AbstractString; predicted_beat_freq::Real=1.2)
-    data=readdlm(path,',',Float64); t=data[:,1]; y=data[:,2].-mean(data[:,2])
+    data=readdlm(path, ',', Float64)
+    size(data, 2) >= 2 || throw(ArgumentError("trace must contain at least two columns"))
+    t=data[:,1]; y=data[:,2].-mean(data[:,2])
     length(t) >= 4 || throw(ArgumentError("at least four samples are required"))
     all(>(0), diff(t)) || throw(ArgumentError("sample times must be strictly increasing"))
     f=FFTW.rfftfreq(length(y),inv(mean(diff(t)))); power=abs2.(FFTW.rfft(y))
