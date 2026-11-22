@@ -1,9 +1,11 @@
+"""Sampling and homogeneous-relaxation settings for a 2D-IR calculation."""
 Base.@kwdef struct SpectrumParams
     t2_values::Vector{Float64}=collect(0.0:0.1:5.0)
     coherence_points::Int=64
     coherence_dt::Float64=0.025
     relaxation::Float64=0.5
 end
+"""Frequency axes, waiting-time axis, and absorptive 2D-IR signal cube."""
 """A real absorptive 2D-IR signal sampled on `(omega1, omega3, t2)`."""
 struct Spectra
     omega1::Vector{Float64}
@@ -18,6 +20,7 @@ struct Spectra
     end
 end
 
+"""Construct the real symmetric instantaneous amide-I Hamiltonian."""
 Spectra(omega1::AbstractVector{<:Real}, omega3::AbstractVector{<:Real},
         t2::AbstractVector{<:Real}, signal::AbstractArray{<:Real,3}) =
     Spectra(collect(Float64, omega1), collect(Float64, omega3),
@@ -38,6 +41,9 @@ end
 """Compute a deterministic semi-impulsive absorptive 2D-IR spectrum."""
 function compute_2DIR_spectrum(traj::Trajectory, sp::SpectrumParams=SpectrumParams())
     sp.coherence_points >= 2 || throw(ArgumentError("coherence_points must be at least 2"))
+    sp.coherence_dt > 0 || throw(ArgumentError("coherence_dt must be positive"))
+    sp.relaxation >= 0 || throw(ArgumentError("relaxation must be nonnegative"))
+    isempty(sp.t2_values) && throw(ArgumentError("t2_values must not be empty"))
     isfinite(sp.coherence_dt) && sp.coherence_dt > 0 ||
         throw(ArgumentError("coherence_dt must be finite and positive"))
     isfinite(sp.relaxation) && sp.relaxation >= 0 ||
@@ -59,6 +65,8 @@ function compute_2DIR_spectrum(traj::Trajectory, sp::SpectrumParams=SpectrumPara
     omega=2pi .* FFTW.fftshift(FFTW.fftfreq(m, inv(dt)))
     Spectra(omega,omega,sp.t2_values,real.(raw))
 end
+"""Convenience wrapper for computing spectra at explicit waiting times."""
+compute_2DIR(traj::Trajectory, t2_values) = compute_2DIR_spectrum(traj, SpectrumParams(t2_values=collect(Float64, t2_values)))
 """Convenience wrapper for computing a spectrum at selected waiting times."""
 compute_2DIR(traj::Trajectory, t2_values) =
     compute_2DIR_spectrum(traj, SpectrumParams(t2_values=collect(Float64, t2_values)))

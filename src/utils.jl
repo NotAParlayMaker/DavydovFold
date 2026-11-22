@@ -1,3 +1,9 @@
+"""Physical and numerical parameters in scaled ps/Å/amu units.
+
+All fields are concrete so a parameter object can be passed through the hot
+integration loop without dynamic dispatch. `output_stride` controls the number
+of integration steps between stored frames and `seed` makes thermal runs
+reproducible.
 """Physical and numerical parameters in internally consistent ps/Å/amu units.
 
 The model is dimensionless after scaling by the amide-I energy. `seed` controls
@@ -43,7 +49,9 @@ const AA_CLASS = Dict(
     'R'=>(0.95,1.04,1.24), 'H'=>(0.96,1.06,1.20))
 
 """Return `(J, χ, ξ)` multipliers for a one-letter amino-acid code."""
-aa_to_params(aa::Char) = get(AA_CLASS, uppercase(aa), (1.0, 1.0, 1.0))
+aa_to_params(aa::Char)::NTuple{3,Float64} = get(AA_CLASS, uppercase(aa), (1.0, 1.0, 1.0))
+
+"""A saved simulation trajectory (sites × time points for each field)."""
 
 """Return amino-acid multipliers, validating that `aa` has one character."""
 function aa_to_params(aa::AbstractString)
@@ -101,6 +109,7 @@ function contact_map(theta::AbstractVector{<:Real}; cutoff::Real=2.2)
     C
 end
 
+"""Write `traj` and its final contact map to an HDF5 file at `path`."""
 """Write `traj` and its terminal contact map to an HDF5 file."""
 function save_trajectory(path::AbstractString, traj::Trajectory)
     import HDF5

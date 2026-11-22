@@ -5,6 +5,9 @@
     spectra = compute_2DIR_spectrum(traj, SpectrumParams(t2_values=collect(0:0.1:0.4), coherence_points=8))
     @test size(spectra.signal) == (8, 8, 5)
     @test extract_beat_frequency(spectra) >= 0
+    odd = compute_2DIR_spectrum(traj, SpectrumParams(t2_values=[0.0], coherence_points=7))
+    @test size(odd.signal) == (7, 7, 1)
+    @test length(odd.omega1) == 7
     @test_throws DimensionMismatch Spectra([0.0], [0.0], [0.0], zeros(2, 1, 1))
     irregular = Spectra([0.0], [0.0], [0.0, 0.1, 0.3], zeros(1, 1, 3))
     @test_throws ArgumentError extract_beat_frequency(irregular)
