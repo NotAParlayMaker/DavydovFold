@@ -6,6 +6,44 @@ contains simulation, spectral analysis, experiment-planning, SQLite, REST, and
 command-line interfaces. The hypothesis is speculative; parameter estimates
 and spectra are predictions rather than validated biological conclusions.
 
+> **DavydovFoldon is a hypothesis-testing and experiment-planning tool. It is
+> not evidence that a Davydov soliton exists in biological protein folding.**
+
+## Experimental feasibility
+
+The planning API distinguishes the **hypothesis**, **theoretical predictions**,
+**simulated observables**, and instrument **measurements**. Agreement at one
+layer does not prove the next. Scenario defaults are editable assumptions.
+
+```julia
+population_budget(feasibility_scenario(:active_translation)) # :no_go
+population_budget(feasibility_scenario(:synthetic_peptide))   # :go planning case
+```
+
+API values are SI: concentration in **mol/L**, rates in **s⁻¹**, and lifetimes
+in **seconds**. The package never guesses whether input is nM, μM, or mM. Replace
+the detection threshold, labeling efficiency, noise floor, and averaging model
+with measurements from the intended instrument. Acquisition time remains
+unknown unless calculated from user-supplied instrument measurements.
+
+See [the experimental feasibility guide](docs/experimental_feasibility.md) for
+worked examples, equations, controls, uncertainty, and staged decisions.
+
+## What DavydovFoldon Can and Cannot Establish
+
+DavydovFoldon can simulate a reduced hypothesis, produce candidate
+conformational trajectories, reconstruct an approximate idealized backbone,
+prepare that candidate for external atomistic testing, predict simplified
+spectral observables, and support quantitative comparison workflows as those
+independent validation layers are implemented.
+
+DavydovFoldon cannot, by itself, predict a validated native protein structure,
+replace an established atomistic MD package, operate arbitrary laboratory
+hardware safely, prove that quantum-directed protein folding occurs, or
+establish topological protection from a long-lived beat alone. In particular,
+candidate reconstruction and short MD are validation inputs—not scientific
+conclusions.
+
 ## Install
 
 ```bash
@@ -27,16 +65,58 @@ traj, final_theta, final_rho = run_soliton("MKFLILFN", p; tmax=20, dt=0.01, T=31
 save_trajectory("results.h5", traj)
 s = compute_2DIR_spectrum(traj, SpectrumParams())
 beat = extract_beat_frequency(s)
+candidate = reconstruct_structure(traj) # explicitly approximate torsion mapping
+write_pdb("candidate.pdb", candidate)
 fig = animate_soliton(traj) # requires: import Pkg; Pkg.add("CairoMakie")
 ```
 
 HDF5 output contains `time`, `exciton_density`, `displacement`, `dihedral`, and
 `contact_map`. Arrays use Julia/HDF5 column-major layout: sites × saved steps.
 
+## Experimental feasibility gate
+
+Before treating a simulated signal as measurable, calculate the transient-state
+population and compare it with an instrument-specific concentration threshold:
+
+```julia
+using DavydovFoldon
+
+assumptions = FeasibilityParams(
+    rnc_concentration_M = 100e-9,
+    elongation_rate_s = 20.0,
+    state_lifetime_s = 200e-12,
+    detection_limit_M = 1e-6,
+)
+
+population = estimate_transient_population(assumptions)
+assessment = assess_2dir_feasibility(assumptions)
+plan = staged_validation_plan()
+```
+
+The default assumptions deliberately return a `:no_go` result for direct bulk
+active-translation detection. The package recommends beginning with a labeled
+synthetic peptide, advancing to purified stalled RNCs, and attempting active
+translation only after the earlier gates pass. `detection_limit_M` is not a
+universal constant; replace it with a measured limit for the chosen reporter,
+path length, pulse sequence, sample background, and acquisition protocol.
+
+The biological reaction-time scan is distinct from the internal 2D-IR waiting
+time:
+
+```julia
+t2 = design_pulse_sequence((0.0, 2.0); step=0.02)       # picosecond-scale axis
+reaction = design_reaction_scan((0.0, 10.0); step=0.5) # seconds-scale axis
+```
+
+See `docs/experimental_feasibility.md` for the staged validation program and
+pre-registered go/no-go criteria.
+
 ## CLI and service
 
 ```bash
 julia --project=. bin/davydovfoldon predict MKFLILFN results.h5
+julia --project=. bin/davydovfoldon reconstruct MKFLILFN candidate.pdb
+julia --project=. bin/davydovfoldon prepare-openmm candidate.pdb system.json
 julia --project=. -e 'using DavydovFoldon; serve(port=8080)'
 curl -X POST localhost:8080/predict -d '{"sequence":"MKFLILFN"}'
 ```

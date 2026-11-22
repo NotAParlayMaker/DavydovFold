@@ -8,4 +8,10 @@
     @test contact_map(theta) isa BitMatrix
     @test_throws ArgumentError run_soliton("MAGL"; T=-1)
     @test_throws ArgumentError contact_map(theta; cutoff=0)
+    short, _, _ = run_soliton("ma", DavydovParams(output_stride=3); tmax=0.05, dt=0.01, T=0)
+    @test short.time[end] == 0.05
+    @test short.sequence == "MA"
+    @test_throws ArgumentError run_soliton("MA"; T=-1)
+    @test_throws ArgumentError run_soliton("MA", DavydovParams(mass=0.0))
+    @test_throws ArgumentError run_soliton("MA"; dt=Inf)
 end
