@@ -45,7 +45,7 @@ function compute_2DIR_spectrum(traj::Trajectory, sp::SpectrumParams=SpectrumPara
     isempty(sp.t2_values) && throw(ArgumentError("t2_values must not be empty"))
     all(isfinite, sp.t2_values) || throw(ArgumentError("t2_values must contain only finite values"))
     all(>=(0), sp.t2_values) || throw(ArgumentError("t2_values must be nonnegative"))
-    issorted(sp.t2_values) || throw(ArgumentError("t2_values must be sorted"))
+    all(diff(sp.t2_values) .> 0) || throw(ArgumentError("t2_values must be strictly increasing"))
     m=sp.coherence_points; dt=sp.coherence_dt
     corr=zeros(ComplexF64,m,m,length(sp.t2_values)); nframes=length(traj.time)
     for (q,t2) in pairs(sp.t2_values)

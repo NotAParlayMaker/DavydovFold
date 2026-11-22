@@ -1,8 +1,21 @@
 #!/usr/bin/env julia
 """DavydovFoldon command-line entry point."""
 using DavydovFoldon
-length(ARGS) in (2, 3) && ARGS[1] == "predict" || error("usage: davydovfoldon predict SEQUENCE [output.h5]")
-output = length(ARGS) >= 3 ? ARGS[3] : "results.h5"
-traj, _, _ = run_soliton(ARGS[2])
-save_trajectory(output, traj)
-println(output)
+function usage()
+    println(stderr,"usage:\n  davydovfoldon predict SEQUENCE [output.h5]\n  davydovfoldon reconstruct SEQUENCE candidate.pdb\n  davydovfoldon prepare-openmm candidate.pdb system.json")
+end
+isempty(ARGS) && (usage(); exit(2))
+try
+    if ARGS[1]=="predict" && length(ARGS) in (2,3)
+        output=length(ARGS)==3 ? ARGS[3] : "results.h5"; traj,_,_=run_soliton(ARGS[2]); save_trajectory(output,traj); println(output)
+    elseif ARGS[1]=="reconstruct" && length(ARGS)==3
+        traj,_,_=run_soliton(ARGS[2];tmax=0.0); structure=reconstruct_structure(traj)
+        endswith(lowercase(ARGS[3]),".pdb") ? write_pdb(ARGS[3],structure) : write_mmcif(ARGS[3],structure); println(ARGS[3])
+    elseif ARGS[1]=="prepare-openmm" && length(ARGS)==3
+        spec=prepare_openmm_system(ARGS[2]); write_openmm_spec(ARGS[3],spec); println(ARGS[3])
+    else
+        usage(); exit(2)
+    end
+catch err
+    println(stderr,"davydovfoldon: ",sprint(showerror,err)); exit(1)
+end
