@@ -136,3 +136,26 @@ Randomness is reproducible through `DavydovParams.seed`.
 
 Provided for research and educational use. Add the license appropriate to your
 distribution before redistribution.
+
+## Model sequence design
+
+The optional Python 3.10+ package generates educational amino-acid sequence
+candidates with exact residue counts and one-based fixed positions. The input
+composition determines the length. Candidates are independently sampled, so
+duplicates are possible. Use a seed to repeat a run on the same Python version.
+The method models sequence composition only. Folding, stability, and activity
+require separate evaluation.
+
+From the repository root, install into a virtual environment and generate FASTA.
+
+```bash
+python3 -m venv python/.venv
+python/.venv/bin/python -m pip install -e ./python
+python/.venv/bin/davydov-design A=4 G=3 S=3 --fixed 1=A --count 3 --seed 42
+```
+
+```python
+from davydov_design import design_sequences
+
+candidates = design_sequences({"A": 4, "G": 3, "S": 3}, fixed={1: "A"}, count=3, seed=42)
+```
