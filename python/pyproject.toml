@@ -1,0 +1,16 @@
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "davydov-design"
+version = "0.1.0"
+description = "Composition-constrained educational amino-acid sequence design"
+requires-python = ">=3.10"
+dependencies = []
+
+[project.scripts]
+davydov-design = "davydov_design.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
